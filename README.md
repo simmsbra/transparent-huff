@@ -1,5 +1,5 @@
 # transparent-huff
-transparent-huff implements Huffman coding for file compression in a way that allows you to see the data structures used for encoding. This, along with the easy-to-follow source code, can hopefully give you a better idea of how Huffman coding works and how it may be implemented in a non-memory-managed language.
+transparent-huff implements, in C, Huffman coding for file compression in a way that allows you to see the data structures used for encoding. This, along with the easy-to-follow source code, can hopefully give you a better idea of how Huffman coding works and how it may be implemented in a non-memory-managed language.
 
 ## Preview
 ```
