@@ -12,7 +12,6 @@
 // and then removed those bits as soon they don't need them anymore
 
 #include <assert.h>
-#include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
 

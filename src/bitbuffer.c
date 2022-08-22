@@ -79,12 +79,12 @@ unsigned char convert_bits_to_byte(const bool *bits, int number_of_bits) {
     for (int i = 0; i < number_of_bits; i += 1) {
         if (bits[i]) {
             // change the i'th bit in the byte from 0 to 1
-            // example if "result" is 0b10000000 and "i" is 3:
+            // example if "result" is currently 0b10000000 and "i" is 3:
             //     result:       0b10000000 (0)
-            //     bit at i = 3: 0b00010000 (2^4) = (2^(7 - i))
+            //     bit at i = 3: 0b00010000 (1 shifted 4 left) = (1 << (7 - i))
             //     -------------------- ADD
             //     result:       0b10010000
-            result += pow(2, 7 - i);
+            result += 1 << (7 - i);
         }
     }
     return result;
