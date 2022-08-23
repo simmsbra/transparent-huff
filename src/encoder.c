@@ -54,24 +54,24 @@ unsigned long int count_byte_frequencies(
 // print the given byte as a decimal number and, if it's printable, the
 // character it represents
 void print_byte_as_number_and_character(unsigned char byte) {
-    printf("%3d", byte);
+    fprintf(stderr, "%3d", byte);
 
     if (isprint(byte)) {
-        printf(" (%c)", byte);
+        fprintf(stderr, " (%c)", byte);
     } else {
-        printf("    ");
+        fprintf(stderr, "    ");
     }
 }
 
 void print_byte_frequencies(const int byte_frequencies[256]) {
-    printf("Byte Frequencies:\n");
+    fprintf(stderr, "Byte Frequencies:\n");
     for (int i = 0; i < 256; i += 1) {
         if (byte_frequencies[i] > 0) {
             print_byte_as_number_and_character(i);
-            printf(": %d\n", byte_frequencies[i]);
+            fprintf(stderr, ": %d\n", byte_frequencies[i]);
         }
     }
-    printf("\n");
+    fprintf(stderr, "\n");
 }
 
 // print the tree structure characters and indents from the path taken to get to
@@ -85,27 +85,27 @@ void print_node_recursive(
     for (int i = 0; i < path_length; i += 1) {
         if (i == path_length - 1) {
             if (path[i]) {
-                printf("└ ");
+                fprintf(stderr, "└ ");
             } else {
-                printf("├ ");
+                fprintf(stderr, "├ ");
             }
         } else {
             if (path[i]) {
-                printf("  ");
+                fprintf(stderr, "  ");
             } else {
-                printf("│ ");
+                fprintf(stderr, "│ ");
             }
         }
     }
 
-    printf("%d", node->weight);
+    fprintf(stderr, "%d", node->weight);
 
     if (is_leaf_node(node)) {
-        printf(": ");
+        fprintf(stderr, ": ");
         print_byte_as_number_and_character(node->symbol);
-        printf("\n");
+        fprintf(stderr, "\n");
     } else {
-        printf("\n");
+        fprintf(stderr, "\n");
         path[path_length] = false;
         print_node_recursive(path, path_length + 1, node->left_child);
         path[path_length] = true;
@@ -114,28 +114,28 @@ void print_node_recursive(
 }
 
 void print_huffman_tree(const struct node *root) {
-    printf("Huffman Tree:\n");
+    fprintf(stderr, "Huffman Tree:\n");
     bool path[255] = {false}; // initialize with all falses
     int path_length = 0;
     print_node_recursive(path, path_length, root);
-    printf("\n");
+    fprintf(stderr, "\n");
 }
 
 void print_prefix_code_mappings(
     const struct prefix_code_mapping mappings[256]
 ) {
-    printf("Prefix Code (Symbol-to-Codeword Mappings):\n");
+    fprintf(stderr, "Prefix Code (Symbol-to-Codeword Mappings):\n");
     for (int i = 0; i < 256; i += 1) {
         if (mappings[i].codeword_length != 0) {
             print_byte_as_number_and_character(i);
-            printf(": ");
+            fprintf(stderr, ": ");
             for (int j = 0; j < mappings[i].codeword_length; j += 1) {
-                printf("%d", mappings[i].codeword[j]);
+                fprintf(stderr, "%d", mappings[i].codeword[j]);
             }
-            printf("\n");
+            fprintf(stderr, "\n");
         }
     }
-    printf("\n");
+    fprintf(stderr, "\n");
 }
 
 // if the node is a leaf, create its prefix code mapping from the node's symbol
@@ -263,7 +263,8 @@ void write_compressed_file(
 
 int main(int argc, char **argv) {
     if (argc < 2) {
-        printf(
+        fprintf(
+            stderr,
             "Error: You must specify the name of the file you want to compress."
             "\nFor example: %s compress-me.txt\n",
             argv[0]
@@ -272,7 +273,7 @@ int main(int argc, char **argv) {
     }
     FILE *file_in = fopen(argv[1], "r");
     if (!file_in) {
-        puts("Error: Could not open input file.");
+        fprintf(stderr, "Error: Could not open input file.\n");
         return 1;
     }
 
@@ -285,7 +286,10 @@ int main(int argc, char **argv) {
     // instead of handling edge cases that don't produce a proper binary tree
     // and that would require special logic, we'll just not support it
     if (total_bytes < 2) {
-        printf("Error: Compressing a file under 2 bytes is not supported.\n");
+        fprintf(
+            stderr,
+            "Error: Compressing a file under 2 bytes is not supported.\n"
+        );
         fclose(file_in);
         return 1;
     }
