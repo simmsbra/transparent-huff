@@ -15,6 +15,16 @@ struct node *create_huffman_tree(const int frequencies[256]) {
         }
     }
 
+    // handle the edge case of 1 node by adding a 2nd arbitrary node, so that we
+    // end up with a proper binary tree instead of just 1 node
+    if (number_of_nodes_in_array == 1) {
+        nodes[number_of_nodes_in_array] = create_node(
+            nodes[0]->symbol + 128 % 256, // use the "farthest away" symbol
+            0
+        );
+        number_of_nodes_in_array += 1;
+    }
+
     // construct a tree by replacing the 2 lowest-weight nodes with 1 new branch
     // node whose children are those 2 nodes and whose weight is the sum of
     // those 2 nodes' weights, and repeating until we are left with only 1

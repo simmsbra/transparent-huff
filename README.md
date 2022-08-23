@@ -58,6 +58,7 @@ The original file and the decompressed file match.
 
 ## Notes
 - When compressing very small files, the compressed file is actually bigger than the original file because the encoded data plus the metadata needed to decode it (which is the number of bytes encoded and the Huffman tree) takes up more bytes than the original data itself.
+- When compressing a file that has only 1 unique byte/symbol, an extra, arbitrary node is added to maintain the fact that the Huffman tree is a binary tree, since that is what the related functions operate on. Otherwise, logic would be needed to also handle 1-node "trees".
 - You can quickly make your own sample file without a newline character at the end by running something like `echo -n "alfalfa" > filename-here` on Linux. Note that this will overwrite the file if it already exists.
 - I was about to make a test file that forced the maximum codeword length of 255, but if my reasoning and math are correct, that file would have this many bytes: 1 + sum 2^i, i=0 to 254
 - To fully understand the source code, you should have a basic idea of how Huffman coding works. One way you can learn is by watching the video in the "Thanks" section below.
