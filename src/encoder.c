@@ -261,28 +261,6 @@ void write_compressed_file(
     buffer_write_any_leftover_bits_as_byte(file_out, &buffer);
 }
 
-// return a string on the heap that is the desired filename for the compressed
-// file, with a ".thf" extension
-char *get_file_out_name(const char *file_in_name) {
-    char *file_out_name_extension = ".thf";
-
-    int file_out_name_length =
-        strlen(file_in_name)
-        + strlen(file_out_name_extension)
-        + 1; // for the null-terminating byte
-    char *file_out_name = malloc(file_out_name_length * sizeof (char));
-
-    snprintf(
-        file_out_name,
-        file_out_name_length,
-        "%s%s",
-        file_in_name,
-        file_out_name_extension
-    );
-
-    return file_out_name;
-}
-
 int main(int argc, char **argv) {
     if (argc < 2) {
         printf(
@@ -298,17 +276,6 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    // exit if desired output file already exists
-    char *file_out_name = get_file_out_name(argv[1]);
-    FILE *file_out_check = fopen(file_out_name, "r");
-    if (file_out_check) {
-        printf("Error: The output file \"%s\" already exists.\n", file_out_name);
-        fclose(file_in);
-        fclose(file_out_check);
-        free(file_out_name);
-        return 1;
-    }
-
     int byte_frequencies[256];
     unsigned long int total_bytes = count_byte_frequencies(
         file_in,
@@ -320,7 +287,6 @@ int main(int argc, char **argv) {
     if (total_bytes < 2) {
         printf("Error: Compressing a file under 2 bytes is not supported.\n");
         fclose(file_in);
-        free(file_out_name);
         return 1;
     }
 
@@ -333,23 +299,14 @@ int main(int argc, char **argv) {
     struct prefix_code_mapping mappings[256];
     create_prefix_code_mappings(huffman_tree, mappings);
 
-    FILE *file_out = fopen(file_out_name, "w");
-    write_compressed_file(
-        file_in,
-        file_out,
-        total_bytes,
-        huffman_tree,
-        mappings
-    );
+    write_compressed_file(file_in, stdout, total_bytes, huffman_tree, mappings);
 
     print_byte_frequencies(byte_frequencies);
     print_huffman_tree(huffman_tree);
     print_prefix_code_mappings(mappings);
 
     // free/close everything
-    free(file_out_name);
     fclose(file_in);
-    fclose(file_out);
     free_node_recursive(huffman_tree);
     free_prefix_code_mappings(mappings);
 

@@ -6,13 +6,19 @@ if [ "$1" == "" ]; then
     exit 1
 fi
 
+if [ -f "$1".thf ]; then
+    echo "Error: Encoder output file $1.thf already exists."
+    exit 1
+fi
 if [ -f "$1".thf.reversed ]; then
     echo "Error: Decoder output file $1.thf.reversed already exists."
     exit 1
 fi
 
-if ! ./encoder "$1" ; then
+if ! ./encoder "$1" > "$1".thf ; then
     echo "Error: Encoder failed."
+    echo "You can now delete the following file that was created:"
+    echo "      compressed file: \"$1.thf\""
     exit 1
 fi
 
