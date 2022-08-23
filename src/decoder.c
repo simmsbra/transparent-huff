@@ -107,7 +107,8 @@ void decode_data_and_write(
 
 int main(int argc, char **argv) {
     if (argc < 2) {
-        printf(
+        fprintf(
+            stderr,
             "Error: You must specify the name of the file you want to"
             " decompress.\nFor example: %s decompress-me.txt.thf\n",
             argv[0]
@@ -116,7 +117,7 @@ int main(int argc, char **argv) {
     }
     FILE *file_in = fopen(argv[1], "r");
     if (!file_in) {
-        puts("Error: Could not open input file.");
+        fprintf(stderr, "Error: Could not open input file.\n");
         return 1;
     }
 
