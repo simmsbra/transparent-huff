@@ -2,12 +2,12 @@
 
 if [ "$1" == "" ]; then
     echo "Error: You must enter a filename."
-    echo "For example: $0 test-me.txt"
+    echo "For example: $0 sample-files/slss"
     exit 1
 fi
 
-COMPRESSED_FILE_NAME="$1.thf"
-DECOMPRESSED_FILE_NAME="$1.thf.reversed"
+COMPRESSED_FILE_NAME="$1.compressed"
+DECOMPRESSED_FILE_NAME="$1.compressed.decompressed"
 
 if [ -f "$COMPRESSED_FILE_NAME" ]; then
     echo "Error: Encoder output file $COMPRESSED_FILE_NAME already exists."

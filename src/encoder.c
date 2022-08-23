@@ -266,7 +266,7 @@ int main(int argc, char **argv) {
         fprintf(
             stderr,
             "Error: You must specify the name of the file you want to compress."
-            "\nFor example: %s compress-me.txt\n",
+            "\nFor example: %s sample-files/slss\n",
             argv[0]
         );
         return 1;

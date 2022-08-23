@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
         fprintf(
             stderr,
             "Error: You must specify the name of the file you want to"
-            " decompress.\nFor example: %s decompress-me.txt.thf\n",
+            " decompress.\nFor example: %s slss.compressed\n",
             argv[0]
         );
         return 1;
