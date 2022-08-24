@@ -1,5 +1,11 @@
 #!/bin/bash
 
+if [ ! -f "encoder" -o ! -f "decoder" ]; then
+    echo "Error: \"encoder\" and/or \"decoder\" not found."
+    echo "Make sure you run build.sh first to compile the binaries."
+    exit 1
+fi
+
 if [ "$1" == "" ]; then
     echo "Error: You must enter a filename."
     echo "For example: $0 sample-files/slss"
