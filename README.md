@@ -72,6 +72,8 @@ This project was created by Brandon Simmons.
 ## Thanks
 Thank you, Marty Stepp, for explaining in this video how Huffman coding works: [42 CS 106B Lecture Huffman Encoding in detail](https://www.youtube.com/watch?v=7pIHeffQXjw).
 
+Thank you, skeeto, for testing these programs and offering [advice](https://www.reddit.com/r/C_Programming/comments/wuzzoh/best_practice_questions_and_request_for_source/ilczdvy/) on how they can be improved.
+
 Thank you, David Dailey, for making [this webpage](http://srufaculty.sru.edu/david.dailey/words/longrepeats.html) of words that are long but have few unique letters. I used some of those words here as examples.
 
 Thank you, countless people whose explanations I read online while researching things about C and Huffman coding.
