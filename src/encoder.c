@@ -1,15 +1,18 @@
 // compressed file format (see relevant functions for more details):
-// 1. the number of bytes that were encoded using the prefix code
+// 1. 32 bits for the number of bytes that were encoded using the prefix code
 //      (we need this to know when the encoded data stops)
-//      unsigned long int (at least 4 bytes)
+//      32 bit unsigned big-endian integer
 // 2. the tree used to create the prefix code during huffman coding
 // 3. 0-7 empty bits to align to byte boundary
 // 4. the input bytes encoded with the prefix code
 // 5. 0-7 empty bits to align to byte boundary
 
+#define _DEFAULT_SOURCE // for endian.h
 #include "bitbuffer.h"
 #include "huffman_tree.h"
 #include <ctype.h>
+#include <endian.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
@@ -31,14 +34,14 @@ struct prefix_code_mapping {
 
 // fill the "byte_frequencies" array with how many occurances each byte has in
 // the file, and return the total number of bytes read
-unsigned long int count_byte_frequencies(
+uint32_t count_byte_frequencies(
     FILE *file,
     int byte_frequencies[256]
 ) {
     for (int i = 0; i < 256; i += 1) {
         byte_frequencies[i] = 0;
     }
-    unsigned long int number_of_bytes_read = 0;
+    uint32_t number_of_bytes_read = 0;
 
     int byte = fgetc(file);
     while (byte != EOF) {
@@ -245,14 +248,16 @@ void write_encoded_data(
 void write_compressed_file(
     FILE *file_in,
     FILE *file_out,
-    unsigned long int number_of_bytes_to_encode,
+    uint32_t number_of_bytes_to_encode,
     const struct node *huffman_tree_root,
     const struct prefix_code_mapping *mappings
 ) {
     struct bit_buffer buffer;
     buffer.length = 0;
 
-    fwrite(&number_of_bytes_to_encode, sizeof (unsigned long int), 1, file_out);
+    // convert from host endianness to big endian
+    number_of_bytes_to_encode = htobe32(number_of_bytes_to_encode);
+    fwrite(&number_of_bytes_to_encode, sizeof (uint32_t), 1, file_out);
 
     write_huffman_tree(file_out, &buffer, huffman_tree_root);
     buffer_write_any_leftover_bits_as_byte(file_out, &buffer);
@@ -278,7 +283,7 @@ int main(int argc, char **argv) {
     }
 
     int byte_frequencies[256];
-    unsigned long int total_bytes = count_byte_frequencies(
+    uint32_t total_bytes = count_byte_frequencies(
         file_in,
         byte_frequencies
     );

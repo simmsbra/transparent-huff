@@ -1,5 +1,8 @@
+#define _DEFAULT_SOURCE // for endian.h
 #include "bitbuffer.h"
 #include "huffman_tree.h"
+#include <endian.h>
+#include <inttypes.h>
 #include <stdbool.h>
 #include <stdio.h>
 
@@ -78,12 +81,12 @@ void decode_data_and_write(
     FILE *file_in,
     const struct node *huffman_tree,
     FILE *file_out,
-    unsigned long int number_of_bytes_to_decode
+    uint32_t number_of_bytes_to_decode
 ) {
     struct bit_buffer buffer;
     buffer.length = 0;
 
-    unsigned long int number_of_bytes_decoded = 0;
+    uint32_t number_of_bytes_decoded = 0;
     bool have_reached_end_of_file = false;
     do {
         // the longest codeword length possible is 255 (see prefix_code_mapping
@@ -121,9 +124,13 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    unsigned long int number_of_bytes_to_decode;
-    fread(&number_of_bytes_to_decode, sizeof (unsigned long int), 1, file_in);
+    uint32_t number_of_bytes_to_decode;
+    fread(&number_of_bytes_to_decode, sizeof (uint32_t), 1, file_in);
+    // convert from big endian to host endianness
+    number_of_bytes_to_decode = be32toh(number_of_bytes_to_decode);
+
     struct node *reconstructed_huffman_tree = read_huffman_tree(file_in);
+
     // now the pointer in file_in is at the first byte of the encoded data
     decode_data_and_write(
         file_in,

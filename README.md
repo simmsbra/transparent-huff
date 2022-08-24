@@ -32,7 +32,7 @@ Prefix Code (Symbol-to-Codeword Mappings):
 118 (v): 0001
 
 Results:
-The compressed file is 85% the size of the original file.
+The compressed file is 70% the size of the original file.
 The original file and the decompressed file match.
 ```
 
