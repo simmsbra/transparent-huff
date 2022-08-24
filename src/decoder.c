@@ -106,25 +106,18 @@ void decode_data_and_write(
 }
 
 int main(int argc, char **argv) {
-    if (argc < 3) {
-        printf(
+    if (argc < 2) {
+        fprintf(
+            stderr,
             "Error: You must specify the name of the file you want to"
-            " decompress and the name of the output (decompressed) file.\n"
-            "For example: %s decompress-me.txt.thf decompressed.txt\n",
+            " decompress.\nFor example: %s slss.compressed\n",
             argv[0]
         );
         return 1;
     }
     FILE *file_in = fopen(argv[1], "r");
     if (!file_in) {
-        puts("Error: Could not open input file.");
-        return 1;
-    }
-    FILE *file_out_check = fopen(argv[2], "r");
-    if (file_out_check) {
-        printf("Error: The output file \"%s\" already exists.\n", argv[2]);
-        fclose(file_in);
-        fclose(file_out_check);
+        fprintf(stderr, "Error: Could not open input file.\n");
         return 1;
     }
 
@@ -132,17 +125,15 @@ int main(int argc, char **argv) {
     fread(&number_of_bytes_to_decode, sizeof (unsigned long int), 1, file_in);
     struct node *reconstructed_huffman_tree = read_huffman_tree(file_in);
     // now the pointer in file_in is at the first byte of the encoded data
-    FILE *file_out = fopen(argv[2], "w");
     decode_data_and_write(
         file_in,
         reconstructed_huffman_tree,
-        file_out,
+        stdout,
         number_of_bytes_to_decode
     );
 
     // free/close everything
     fclose(file_in);
-    fclose(file_out);
     free_node_recursive(reconstructed_huffman_tree);
 
     return 0;

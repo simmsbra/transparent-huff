@@ -42,23 +42,21 @@ The original file and the decompressed file match.
 - Work out my recursion muscles
 - Provide straightforward and well-written(?) source code as a reference for people working on similar projects
 
-## Usage
-### Linux
+## Usage (Linux)
   1. Make sure you have `gcc` installed (for compiling the C source files).
   2. Download or clone this repository and move into its directory.
   3. Run `./build.sh` to compile the source into the `encoder` and `decoder` binaries.
-  4. Run the compression-and-decompression script with a simple sample file.
+### With Helper Script
+  4. Run the compression-and-decompression script with any file.
      - `./compress-then-decompress.sh sample-files/slss`
-  5. View the encoder's printout of its data structures to get a sense for how the frequency of each byte determines its place in the tree and, so, the length of its codeword.
-  6. Now try the compression-and-decompression script on other sample files or your own files.
-### Other (Any Compiler, No BASH Scripts)
-  1. Compile the source into the `encoder` and `decoder` binaries.
-     - See `build.sh` for what kind of arguments you may need to use.
-  2. Run `encoder`, passing `sample-files/slss`.
-  3. Run `decoder`, passing `sample-files/slss.thf` and `sample-files/slss.thf.reversed`.
+### Without Helper Script
+  - Both the `encoder` and `decoder` binaries read from the given filename, output messages to `stderr`, and output data to `stdout`. By default, both `stderr` and `stdout` get printed to the terminal, but in these steps we will separate the streams by redirecting `stdout` to a file. Note that this will overwrite the file you are redirecting to.
+  4. Compress any file, redirecting `stdout` to your desired filename.
+     - `./encoder sample-files/slss > slss.compressed`
+  5. Decompress the compressed file, redirecting `stdout` to your desired filename.
+     - `./decoder slss.compressed > slss.decompressed`
 
 ## Notes
-- The scripts and programs here will not overwrite your files. `encoder` and `decoder` each only read the input file and create a separate output file, erroring out if it already exists.
 - When compressing very small files, the compressed file is actually bigger than the original file because the encoded data plus the metadata needed to decode it (which is the number of bytes encoded and the Huffman tree) takes up more bytes than the original data itself.
 - You can quickly make your own sample file without a newline character at the end by running something like `echo -n "alfalfa" > filename-here` on Linux. Note that this will overwrite the file if it already exists.
 - I was about to make a test file that forced the maximum codeword length of 255, but if my reasoning and math are correct, that file would have this many bytes: 1 + sum 2^i, i=0 to 254
