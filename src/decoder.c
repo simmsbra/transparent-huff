@@ -44,18 +44,28 @@ struct node *read_huffman_tree(FILE *file) {
     return read_node_recursive(file, &buffer);
 }
 
-// if the node is a leaf, return its symbol and drop the bits used to get here;
-// else, use the current bit to determine which child node to follow
-unsigned char decode_codeword_recursive(
+// if the node is a leaf, get its symbol and drop the bits used to get here;
+// else, use the current bit to determine which child node to follow. returns
+// whether the decoding was successful
+int decode_codeword_recursive(
     struct bit_buffer *buffer,
     int buffer_index,
-    const struct node *node
+    const struct node *node,
+    unsigned char *symbol
 ) {
     if (is_leaf_node(node)) {
         // remove from the buffer the number of bits we read to resolve this
         // codeword, which we can determine from the buffer index
         buffer_drop_left_bits(buffer, buffer_index);
-        return node->symbol;
+        *symbol = node->symbol;
+        return 0;
+    }
+
+    // we are on a branch node, but are out of bits in the buffer, so we don't
+    // know which direction to go. this means that the compressed file is
+    // invalid
+    if (buffer_index == buffer->length) {
+        return 1;
     }
 
     struct node *child_to_follow;
@@ -64,20 +74,28 @@ unsigned char decode_codeword_recursive(
     } else {
         child_to_follow = node->right_child;
     }
-    return decode_codeword_recursive(buffer, buffer_index + 1, child_to_follow);
+    return decode_codeword_recursive(
+        buffer,
+        buffer_index + 1,
+        child_to_follow,
+        symbol
+    );
 }
 
 // decode 1 codeword's worth of bits from the buffer into its symbol by using
-// the bits as a path in the huffman tree
-unsigned char decode_codeword(
+// the bits as a path in the huffman tree. return whether the decoding was
+// successful
+int decode_codeword(
     struct bit_buffer *buffer,
-    const struct node *tree
+    const struct node *tree,
+    unsigned char *symbol
 ) {
-    return decode_codeword_recursive(buffer, 0, tree);
+    return decode_codeword_recursive(buffer, 0, tree, symbol);
 }
 
-// decode the encoded data from the input file and write it to the output file
-void decode_data_and_write(
+// decode the encoded data from the input file and write it to the output file.
+// returns whether the decoding was successful
+int decode_data_and_write(
     FILE *file_in,
     const struct node *huffman_tree,
     FILE *file_out,
@@ -102,10 +120,15 @@ void decode_data_and_write(
             }
         }
 
-        unsigned char symbol = decode_codeword(&buffer, huffman_tree);
+        unsigned char symbol;
+        if (decode_codeword(&buffer, huffman_tree, &symbol)) {
+            return 1;
+        }
         number_of_bytes_decoded += 1;
         fputc(symbol, file_out);
     } while (number_of_bytes_decoded < number_of_bytes_to_decode);
+
+    return 0;
 }
 
 int main(int argc, char **argv) {
@@ -132,7 +155,7 @@ int main(int argc, char **argv) {
     struct node *reconstructed_huffman_tree = read_huffman_tree(file_in);
 
     // now the pointer in file_in is at the first byte of the encoded data
-    decode_data_and_write(
+    int decoding_exit_status = decode_data_and_write(
         file_in,
         reconstructed_huffman_tree,
         stdout,
@@ -143,5 +166,14 @@ int main(int argc, char **argv) {
     fclose(file_in);
     free_node_recursive(reconstructed_huffman_tree);
 
-    return 0;
+    if (decoding_exit_status) {
+        fprintf(
+            stderr,
+            "Error: There was not enough encoded data to decode the last"
+            " codeword.\nThe compressed file is invalid.\n"
+        );
+        return 1;
+    } else {
+        return 0;
+    }
 }
