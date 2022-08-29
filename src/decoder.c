@@ -120,9 +120,15 @@ int decode_data_and_write(
             }
         }
 
+        // there is not enough encoded data to decode the specified number of
+        // bytes. this means that the compressed file is invalid
+        if (buffer.length == 0) {
+            return 1;
+        }
+
         unsigned char symbol;
         if (decode_codeword(&buffer, huffman_tree, &symbol)) {
-            return 1;
+            return 2;
         }
         number_of_bytes_decoded += 1;
         fputc(symbol, file_out);
@@ -174,7 +180,14 @@ int main(int argc, char **argv) {
     fclose(file_in);
     free_node_recursive(reconstructed_huffman_tree);
 
-    if (decoding_exit_status) {
+    if (decoding_exit_status == 1) {
+        fprintf(
+            stderr,
+            "Error: There was not enough encoded data to decode the specified"
+            " number of bytes.\nThe compressed file is invalid.\n"
+        );
+        return 1;
+    } else if (decoding_exit_status == 2) {
         fprintf(
             stderr,
             "Error: There was not enough encoded data to decode the last"
