@@ -36,12 +36,19 @@ struct node *read_node_recursive(FILE *file, struct bit_buffer *buffer) {
     return node;
 }
 
-// reconstruct the huffman tree that is written in the compressed file
-struct node *read_huffman_tree(FILE *file) {
+// reconstruct the huffman tree that is written in the compressed file. returns
+// whether the reading was successful
+int read_huffman_tree(FILE *file, struct node **tree) {
     struct bit_buffer buffer;
     buffer.length = 0;
 
-    return read_node_recursive(file, &buffer);
+    *tree = read_node_recursive(file, &buffer);
+    if (is_leaf_node(*tree)) {
+        // it is just 1 leaf node -- not a proper binary tree
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 // if the node is a leaf, get its symbol and drop the bits used to get here;
@@ -166,7 +173,17 @@ int main(int argc, char **argv) {
     // convert from big endian to host endianness
     number_of_bytes_to_decode = be32toh(number_of_bytes_to_decode);
 
-    struct node *reconstructed_huffman_tree = read_huffman_tree(file_in);
+    struct node *reconstructed_huffman_tree = NULL;
+    if (read_huffman_tree(file_in, &reconstructed_huffman_tree)) {
+        fclose(file_in);
+        free_node_recursive(reconstructed_huffman_tree);
+        fprintf(
+            stderr,
+            "Error: Unable to read a proper binary Huffman tree.\n"
+            "The compressed file is invalid.\n"
+        );
+        return 1;
+    }
 
     // now the pointer in file_in is at the first byte of the encoded data
     int decoding_exit_status = decode_data_and_write(
