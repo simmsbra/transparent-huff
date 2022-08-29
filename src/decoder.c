@@ -148,7 +148,15 @@ int main(int argc, char **argv) {
     }
 
     uint32_t number_of_bytes_to_decode;
-    fread(&number_of_bytes_to_decode, sizeof (uint32_t), 1, file_in);
+    if (fread(&number_of_bytes_to_decode, sizeof (uint32_t), 1, file_in) < 1) {
+        fprintf(
+            stderr,
+            "Error: Unable to read the number of bytes to decode.\n"
+            "The compressed file is invalid.\n"
+        );
+        fclose(file_in);
+        return 1;
+    }
     // convert from big endian to host endianness
     number_of_bytes_to_decode = be32toh(number_of_bytes_to_decode);
 
