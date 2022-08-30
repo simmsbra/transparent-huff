@@ -41,6 +41,8 @@ The original file and the decompressed file match.
 - Work out my C muscles, including non-trivial pointer usage and declarations
 - Work out my recursion muscles
 - Provide straightforward and well-written(?) source code as a reference for people working on similar projects
+- Learn how to do cross-architecture testing
+- Learn how to fuzz (using [american fuzzy lop](https://github.com/google/AFL))
 
 ## Usage (Linux)
   1. Make sure you have `gcc` installed (for compiling the C source files).
@@ -65,6 +67,7 @@ The original file and the decompressed file match.
 - For some functions, I used declarations like `int function(int array[256])` instead of `int function(int *array)` to make it clear that the array is expected to have exactly that many elements, even though the argument just decays to a pointer anyway.
 - I used Valgrind to fix any memory leaks I could find. I did this by testing each return branch in the main functions of both `src/encoder.c` and `src/decoder.c`. I don't know if that is sufficient to say that there are no possible memory leaks, though.
 - These programs are definitely not the fastest nor the most memory efficient, but that's OK since they weren't designed to be.
+- After fixing problems found via fuzzing, `src/decoder.c` has a lot more error handling and is not as simple as it was.
 
 ## Author
 This project was created by Brandon Simmons.
