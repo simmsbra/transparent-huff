@@ -7,21 +7,49 @@
 #include <stdio.h>
 
 // create node by reading the bits that should represent the node. if it's a
-// branch node, do the same with its child nodes.
+// branch node, do the same with its child nodes. returns whether the reading
+// was successful
 //
 // see comment on write_huffman_tree() in encoder.c for how the tree was written
-struct node *read_node_recursive(FILE *file, struct bit_buffer *buffer) {
+int read_node_recursive(
+    FILE *file,
+    struct bit_buffer *buffer,
+    struct node **node,
+    int depth
+) {
+    // we have gone past the maximum possible codeword length / depth (see
+    // comment of prefix_code_mapping struct in encoder.c). this means that the
+    // compressed file is invalid
+    if (depth >= 256) {
+        return 1;
+    }
+
     if (buffer->length < 1) {
         buffer_append_byte(buffer, fgetc(file));
     }
 
-    struct node *node;
     // 0 is a branch node; 1 is a leaf node
     if (buffer->bits[0] == 0) {
         buffer_drop_left_bits(buffer, 1);
-        node = create_node(0, -1); // we don't need the weight, so -1
-        node->left_child = read_node_recursive(file, buffer);
-        node->right_child = read_node_recursive(file, buffer);
+        *node = create_node(0, -1); // we don't need the weight, so -1
+        int left_exit_status = read_node_recursive(
+            file,
+            buffer,
+            &((*node)->left_child),
+            depth + 1
+        );
+        if (left_exit_status) {
+            return 1;
+        }
+        int right_exit_status = read_node_recursive(
+            file,
+            buffer,
+            &((*node)->right_child),
+            depth + 1
+        );
+        if (right_exit_status) {
+            return 1;
+        }
     } else {
         buffer_drop_left_bits(buffer, 1);
         // make sure we have enough bits in buffer to get the node's symbol
@@ -29,33 +57,52 @@ struct node *read_node_recursive(FILE *file, struct bit_buffer *buffer) {
             buffer_append_byte(buffer, fgetc(file));
         }
         unsigned char symbol = convert_bits_to_byte(buffer->bits, 8);
-        node = create_node(symbol, -1); // we don't need the weight, so -1
+        *node = create_node(symbol, -1); // we don't need the weight, so -1
         buffer_drop_left_bits(buffer, 8);
     }
-
-    return node;
+    return 0;
 }
 
-// reconstruct the huffman tree that is written in the compressed file
-struct node *read_huffman_tree(FILE *file) {
+// reconstruct the huffman tree that is written in the compressed file. returns
+// whether the reading was successful
+int read_huffman_tree(FILE *file, struct node **tree) {
     struct bit_buffer buffer;
     buffer.length = 0;
 
-    return read_node_recursive(file, &buffer);
+    if (read_node_recursive(file, &buffer, tree, 0)) {
+        // it would have too much depth
+        return 1;
+    }
+    if (is_leaf_node(*tree)) {
+        // it is just 1 leaf node
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
-// if the node is a leaf, return its symbol and drop the bits used to get here;
-// else, use the current bit to determine which child node to follow
-unsigned char decode_codeword_recursive(
+// if the node is a leaf, get its symbol and drop the bits used to get here;
+// else, use the current bit to determine which child node to follow. returns
+// whether the decoding was successful
+int decode_codeword_recursive(
     struct bit_buffer *buffer,
     int buffer_index,
-    const struct node *node
+    const struct node *node,
+    unsigned char *symbol
 ) {
     if (is_leaf_node(node)) {
         // remove from the buffer the number of bits we read to resolve this
         // codeword, which we can determine from the buffer index
         buffer_drop_left_bits(buffer, buffer_index);
-        return node->symbol;
+        *symbol = node->symbol;
+        return 0;
+    }
+
+    // we are on a branch node, but are out of bits in the buffer, so we don't
+    // know which direction to go. this means that the compressed file is
+    // invalid
+    if (buffer_index == buffer->length) {
+        return 1;
     }
 
     struct node *child_to_follow;
@@ -64,20 +111,28 @@ unsigned char decode_codeword_recursive(
     } else {
         child_to_follow = node->right_child;
     }
-    return decode_codeword_recursive(buffer, buffer_index + 1, child_to_follow);
+    return decode_codeword_recursive(
+        buffer,
+        buffer_index + 1,
+        child_to_follow,
+        symbol
+    );
 }
 
 // decode 1 codeword's worth of bits from the buffer into its symbol by using
-// the bits as a path in the huffman tree
-unsigned char decode_codeword(
+// the bits as a path in the huffman tree. return whether the decoding was
+// successful
+int decode_codeword(
     struct bit_buffer *buffer,
-    const struct node *tree
+    const struct node *tree,
+    unsigned char *symbol
 ) {
-    return decode_codeword_recursive(buffer, 0, tree);
+    return decode_codeword_recursive(buffer, 0, tree, symbol);
 }
 
-// decode the encoded data from the input file and write it to the output file
-void decode_data_and_write(
+// decode the encoded data from the input file and write it to the output file.
+// returns whether the decoding was successful
+int decode_data_and_write(
     FILE *file_in,
     const struct node *huffman_tree,
     FILE *file_out,
@@ -102,10 +157,21 @@ void decode_data_and_write(
             }
         }
 
-        unsigned char symbol = decode_codeword(&buffer, huffman_tree);
+        // there is not enough encoded data to decode the specified number of
+        // bytes. this means that the compressed file is invalid
+        if (buffer.length == 0) {
+            return 1;
+        }
+
+        unsigned char symbol;
+        if (decode_codeword(&buffer, huffman_tree, &symbol)) {
+            return 2;
+        }
         number_of_bytes_decoded += 1;
         fputc(symbol, file_out);
     } while (number_of_bytes_decoded < number_of_bytes_to_decode);
+
+    return 0;
 }
 
 int main(int argc, char **argv) {
@@ -125,14 +191,32 @@ int main(int argc, char **argv) {
     }
 
     uint32_t number_of_bytes_to_decode;
-    fread(&number_of_bytes_to_decode, sizeof (uint32_t), 1, file_in);
+    if (fread(&number_of_bytes_to_decode, sizeof (uint32_t), 1, file_in) < 1) {
+        fprintf(
+            stderr,
+            "Error: Unable to read the number of bytes to decode.\n"
+            "The compressed file is invalid.\n"
+        );
+        fclose(file_in);
+        return 1;
+    }
     // convert from big endian to host endianness
     number_of_bytes_to_decode = be32toh(number_of_bytes_to_decode);
 
-    struct node *reconstructed_huffman_tree = read_huffman_tree(file_in);
+    struct node *reconstructed_huffman_tree = NULL;
+    if (read_huffman_tree(file_in, &reconstructed_huffman_tree)) {
+        fclose(file_in);
+        free_node_recursive(reconstructed_huffman_tree);
+        fprintf(
+            stderr,
+            "Error: Unable to read a proper binary Huffman tree.\n"
+            "The compressed file is invalid.\n"
+        );
+        return 1;
+    }
 
     // now the pointer in file_in is at the first byte of the encoded data
-    decode_data_and_write(
+    int decoding_exit_status = decode_data_and_write(
         file_in,
         reconstructed_huffman_tree,
         stdout,
@@ -143,5 +227,21 @@ int main(int argc, char **argv) {
     fclose(file_in);
     free_node_recursive(reconstructed_huffman_tree);
 
-    return 0;
+    if (decoding_exit_status == 1) {
+        fprintf(
+            stderr,
+            "Error: There was not enough encoded data to decode the specified"
+            " number of bytes.\nThe compressed file is invalid.\n"
+        );
+        return 1;
+    } else if (decoding_exit_status == 2) {
+        fprintf(
+            stderr,
+            "Error: There was not enough encoded data to decode the last"
+            " codeword.\nThe compressed file is invalid.\n"
+        );
+        return 1;
+    } else {
+        return 0;
+    }
 }

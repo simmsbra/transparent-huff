@@ -77,8 +77,10 @@ int compare_nodes(const void *first, const void *second) {
 }
 
 void free_node_recursive(struct node *node) {
-    if (!is_leaf_node(node)) {
+    if (node->left_child != NULL) {
         free_node_recursive(node->left_child);
+    }
+    if (node->right_child != NULL) {
         free_node_recursive(node->right_child);
     }
     free(node);
