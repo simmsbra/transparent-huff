@@ -73,12 +73,12 @@ The original file and the decompressed file match.
 This project was created by Brandon Simmons.
 
 ## Thanks
-Thank you, Marty Stepp, for explaining in this video how Huffman coding works: [42 CS 106B Lecture Huffman Encoding in detail](https://www.youtube.com/watch?v=7pIHeffQXjw).
+Thanks to Marty Stepp for explaining in this video how Huffman coding works: [42 CS 106B Lecture Huffman Encoding in detail](https://www.youtube.com/watch?v=7pIHeffQXjw).
 
-Thank you, skeeto, for testing these programs and offering [advice](https://www.reddit.com/r/C_Programming/comments/wuzzoh/best_practice_questions_and_request_for_source/ilczdvy/) on how they can be improved.
+Thanks to skeeto for testing these programs and offering [advice](https://www.reddit.com/r/C_Programming/comments/wuzzoh/best_practice_questions_and_request_for_source/ilczdvy/) on how they can be improved.
 
-Thank you, David Dailey, for making [this webpage](https://web.archive.org/web/20220611025834/http://srufaculty.sru.edu/david.dailey/words/longrepeats.html) of words that are long but have few unique letters. I used some of those words here as examples.
+Thanks to David Dailey for making [this webpage](https://web.archive.org/web/20220611025834/http://srufaculty.sru.edu/david.dailey/words/longrepeats.html) of words that are long but have few unique letters. I used some of those words here as examples.
 
-Thank you, countless people whose explanations I read online while researching things about C and Huffman coding.
+Thanks to the countless people whose explanations I read online while researching things about C and Huffman coding.
 
-And thank you for visiting.
+And thanks to you for visiting.
